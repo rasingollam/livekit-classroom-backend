@@ -92,7 +92,12 @@ app.post('/api/teacher-action', async (req, res) => {
     } catch (error) {
         console.error('Error performing teacher action:', error);
         // Provide more specific error info if possible, e.g., if room not found
-        if (error.message.includes('Room not found')) {
+        // Check the error code for a more reliable way to detect a non-existent room
+        if (error.code === 'not_found') {
+            // If the room doesn't exist, it has no participants. Return an empty list.
+            if (action === 'listParticipants') {
+                return res.json({ participants: [] });
+            }
             return res.status(404).json({ error: 'Room not found or no active participants yet.' });
         }
         return res.status(500).json({ error: 'Failed to perform action.' });
