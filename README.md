@@ -1,112 +1,111 @@
-# LiveKit Classroom Demo
+# EdumeClassroom LiveKit Backend API Documentation
 
-This project is a simple, functional example of a virtual classroom application built with LiveKit, Node.js, and React. It demonstrates how to implement basic roles (teacher and student) with different permissions, such as the ability for a teacher to mute other participants.
-
-## Features
-
--   Real-time video and audio communication.
--   Role-based permissions (Teacher vs. Student).
--   Teachers can mute and remove other participants.
--   Secure token generation on a Node.js backend.
--   Simple and clean user interface for joining rooms.
--   Built with the official LiveKit SDKs and pre-built React components.
-
-## Technology Stack
-
--   **Backend**: Node.js, Express.js
--   **Frontend**: React.js
--   **Real-time Communication**: LiveKit
--   **Dependencies**: `livekit-server-sdk`, `livekit-client`, `@livekit/components-react`, `express`, `cors`, `dotenv`
-
-## Project Structure
-
-The project is divided into two main parts:
-
--   `livekit-classroom-backend/`: The Node.js server responsible for authenticating users and generating LiveKit access tokens.
--   `livekit-classroom-frontend/`: The React single-page application that users interact with to join video rooms.
+This document explains how to use the backend authentication route (`authRoutes.js`) from your React frontend to join a LiveKit-powered classroom.  
+A usage example is provided from the frontend file [`App.js`](livekit-classroom-frontend/src/App.js).
 
 ---
 
-## Getting Started
+## API Endpoint
 
-Follow these instructions to get the project running on your local machine.
+**POST** `/api/classroom/get-livekit-token`
 
-### Prerequisites
+This endpoint generates a LiveKit access token for a user (student or teacher) to join a classroom (room).
 
--   Node.js and npm installed.
--   A LiveKit Cloud account and project credentials (API Key, API Secret, and URL).
+### Request Body
 
-### 1. Backend Setup
+Send a JSON object with the following fields:
 
-First, set up and run the backend server.
+| Field                | Type      | Required | Description                                 |
+|----------------------|-----------|----------|---------------------------------------------|
+| `roomName`           | string    | Yes      | The name of the classroom/room to join      |
+| `participantIdentity`| string    | Yes      | A unique identifier for the participant     |
+| `participantName`    | string    | Yes      | The display name of the participant         |
+| `isTeacher`          | boolean   | Yes      | Set to `true` if the user is a teacher      |
 
-```bash
-# Navigate to the backend directory
-cd livekit-classroom-backend
-
-# Install dependencies
-npm install
+**Example:**
+```json
+{
+  "roomName": "math-class",
+  "participantIdentity": "teacher-1721041234567",
+  "participantName": "Alice",
+  "isTeacher": true
+}
 ```
-
-Next, create an environment file to store your LiveKit credentials.
-
-1.  Create a new file named `.env` in the `livekit-classroom-backend` root directory.
-2.  Add your LiveKit credentials to the file:
-
-    ```env
-    # .env
-    LIVEKIT_URL=wss://YOUR_PROJECT_URL.livekit.cloud
-    LIVEKIT_API_KEY=YOUR_API_KEY
-    LIVEKIT_API_SECRET=YOUR_API_SECRET
-
-    # Optional: Port for your backend server
-    PORT=3001
-    ```
-
-    **Important**: Replace the placeholder values with your actual credentials from the LiveKit Cloud dashboard.
-
-Now, run the backend server:
-
-```bash
-node server.js
-```
-
-The server should now be running on `http://localhost:3001`. Keep this terminal window open.
-
-### 2. Frontend Setup
-
-In a **new terminal window**, set up and run the React frontend.
-
-```bash
-# Navigate to the frontend directory
-cd livekit-classroom-frontend
-
-# Install dependencies
-npm install
-
-# Start the React development server
-npm start
-```
-
-Your browser should automatically open to `http://localhost:3000`.
 
 ---
 
-## How to Use
+## How to Use This API in the React Frontend
 
-1.  **Start the Backend**: Make sure the Node.js server is running.
-2.  **Start the Frontend**: Make sure the React development server is running.
-3.  **Join as a Teacher**:
-    -   Open a browser tab and navigate to `http://localhost:3000`.
-    -   Enter your name.
-    -   Enter a room name (e.g., `math-101`).
-    -   Check the "I am a teacher" box.
-    -   Click "Join Room".
-4.  **Join as a Student**:
-    -   Open a second browser tab or window.
-    -   Enter a different name.
-    -   Enter the **exact same room name** (`math-101`).
-    -   Leave the "I am a teacher" box unchecked.
-    -   Click "Join Room".
+Below is an example of how to call this API from your React frontend.  
 
-You should now be in a video call with
+```javascript
+const handleJoinRoom = async (e) => {
+  e.preventDefault();
+  if (!roomName || !participantName) {
+    alert('Room name and participant name are required.');
+    return;
+  }
+
+  // Generate a unique participant identity
+  const participantIdentity = `${isTeacher ? 'teacher' : 'student'}-${Date.now()}`;
+
+  try {
+    const response = await fetch('http://localhost:3001/api/classroom/get-livekit-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        roomName,
+        participantIdentity,
+        participantName,
+        isTeacher,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to get token');
+    }
+
+    const data = await response.json();
+    setToken(data.token);        // Save the token for LiveKitRoom
+    setLivekitUrl(data.url);     // Save the LiveKit server URL
+  } catch (error) {
+    alert(`Error joining room: ${error.message}`);
+  }
+};
+```
+
+### Usage Flow
+
+1. **Collect user input** for name, room, and teacher status.
+2. **Call the API** as shown above to get a LiveKit token and server URL.
+3. **Pass the token and URL** to your LiveKitRoom component to join the classroom.
+
+---
+
+## Example UI Integration
+
+```javascript
+<LiveKitRoom
+  serverUrl={livekitUrl}
+  token={token}
+  connect={true}
+  onDisconnected={() => setToken('')}
+  audio={true}
+  video={true}
+>
+  <VideoConference />
+  <RoomAudioRenderer />
+</LiveKitRoom>
+```
+
+---
+
+## Notes
+
+- Both teachers and students use the same endpoint; set `isTeacher` accordingly.
+- The backend will create the room automatically if it does not exist when the first participant joins.
+- Make sure your backend server is running and accessible from your frontend.
+- For a full working example, see [`livekit-classroom-frontend/src/App.js`](livekit-classroom-frontend/src/App.js).
