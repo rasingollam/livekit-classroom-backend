@@ -25,7 +25,7 @@ function App() {
     const participantIdentity = `${isTeacher ? 'teacher' : 'student'}-${Date.now()}`;
 
     try {
-      const response = await fetch('http://localhost:3001/api/get-livekit-token', {
+      const response = await fetch('http://localhost:3001/api/classroom/get-livekit-token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

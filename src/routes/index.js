@@ -3,7 +3,7 @@ const router = express.Router();
 const authRoutes = require('./authRoutes');
 const roomRoutes = require('./roomRoutes');
 
-router.use('/api', authRoutes);
-router.use('/api', roomRoutes);
+router.use('/api/classroom', authRoutes);
+router.use('/api/classroom', roomRoutes);
 
 module.exports = router;
