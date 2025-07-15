@@ -28,46 +28,7 @@ const generateToken = async (roomName, participantIdentity, participantName, isT
   return at.toJwt();
 };
 
-/**
- * Mute a participant's audio
- */
-const muteParticipant = async (roomName, participantIdentity) => {
-  return roomService.mutePublishedTrack(roomName, participantIdentity, 'audio', true);
-};
-
-/**
- * Unmute a participant's audio
- */
-const unmuteParticipant = async (roomName, participantIdentity) => {
-  return roomService.mutePublishedTrack(roomName, participantIdentity, 'audio', false);
-};
-
-/**
- * Remove a participant from a room
- */
-const removeParticipant = async (roomName, participantIdentity) => {
-  return roomService.removeParticipant(roomName, participantIdentity);
-};
-
-/**
- * List all participants in a room
- */
-const listParticipants = async (roomName) => {
-  try {
-    const roomInfo = await roomService.listParticipants(roomName);
-    return roomInfo.participants;
-  } catch (error) {
-    if (error.code === 'not_found') {
-      return [];
-    }
-    throw error;
-  }
-};
 
 module.exports = {
-  generateToken,
-  muteParticipant,
-  unmuteParticipant,
-  removeParticipant,
-  listParticipants
+  generateToken
 };
